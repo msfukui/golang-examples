@@ -16,3 +16,11 @@ func TestMypkg(t *testing.T) {
 		t.Error("Error ", s)
 	}
 }
+
+func TestClient(t *testing.T) {
+	defer mypkg.SetBaseUrl("http://localhost:8080")()
+
+	if s := mypkg.Client(); s != "http" {
+		t.Error("Error ", s)
+	}
+}
