@@ -17,3 +17,15 @@ func DoSomething() int {
 func Client() string {
 	return strings.Split(baseURL, ":")[0]
 }
+
+type Counter struct {
+	n int
+}
+
+func (c *Counter) Count() {
+	c.n++
+}
+
+func (c *Counter) reset() {
+	c.n = 0
+}

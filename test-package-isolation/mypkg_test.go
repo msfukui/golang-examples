@@ -24,3 +24,18 @@ func TestClient(t *testing.T) {
 		t.Error("Error ", s)
 	}
 }
+
+func TestCounter(t *testing.T) {
+	var c mypkg.Counter
+
+	c.Count()
+	c.Count()
+	if mypkg.ExportCounterReset(&c); c.ExportN() != 0 {
+		t.Error("Error ", c.ExportN())
+	}
+
+	c.Count()
+	if c.ExportSetN(5); c.ExportN() != 5 {
+		t.Error("Error ", c.ExportN())
+	}
+}
