@@ -19,3 +19,8 @@ func (c *Counter) ExportN() int {
 func (c *Counter) ExportSetN(n int) {
 	c.n = n
 }
+
+type ExportResponse = response
+
+var ExportSetResponse = (*response).setResponse
+var ExportGetResponse = (*response).getResponse

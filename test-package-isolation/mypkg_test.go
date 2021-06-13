@@ -39,3 +39,12 @@ func TestCounter(t *testing.T) {
 		t.Error("Error ", c.ExportN())
 	}
 }
+
+func TestResponse(t *testing.T) {
+	var r mypkg.ExportResponse
+
+	mypkg.ExportSetResponse(&r, "test")
+	if mypkg.ExportGetResponse(&r) != "test" {
+		t.Error("Error ", mypkg.ExportGetResponse(&r))
+	}
+}
