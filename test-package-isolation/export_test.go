@@ -4,9 +4,9 @@ const ExportMaxValue = maxValue
 
 func SetBaseUrl(s string) (resetFunc func()) {
 	var tmp string
-	tmp, baseURL = baseURL, s
+	tmp, mybaseURL = mybaseURL, s
 	return func() {
-		baseURL = tmp
+		mybaseURL = tmp
 	}
 }
 
@@ -22,5 +22,15 @@ func (c *Counter) ExportSetN(n int) {
 
 type ExportResponse = response
 
-var ExportSetResponse = (*response).setResponse
-var ExportGetResponse = (*response).getResponse
+var ExportSetMyResponse = (*response).setResponse
+var ExportGetMyResponse = (*response).getResponse
+
+func SetBaseURL(s string) (resetFunc func()) {
+	var tmp string
+	tmp, baseURL = baseURL, s
+	return func() {
+		baseURL = tmp
+	}
+}
+
+type ExportGetResponse = getResponse

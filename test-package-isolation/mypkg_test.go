@@ -17,10 +17,10 @@ func TestMypkg(t *testing.T) {
 	}
 }
 
-func TestClient(t *testing.T) {
+func TestMyClient(t *testing.T) {
 	defer mypkg.SetBaseUrl("http://localhost:8080")()
 
-	if s := mypkg.Client(); s != "http" {
+	if s := mypkg.MyClient(); s != "http" {
 		t.Error("Error ", s)
 	}
 }
@@ -43,8 +43,8 @@ func TestCounter(t *testing.T) {
 func TestResponse(t *testing.T) {
 	var r mypkg.ExportResponse
 
-	mypkg.ExportSetResponse(&r, "test")
-	if mypkg.ExportGetResponse(&r) != "test" {
-		t.Error("Error ", mypkg.ExportGetResponse(&r))
+	mypkg.ExportSetMyResponse(&r, "test")
+	if mypkg.ExportGetMyResponse(&r) != "test" {
+		t.Error("Error ", mypkg.ExportGetMyResponse(&r))
 	}
 }
