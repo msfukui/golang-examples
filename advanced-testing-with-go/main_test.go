@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
+	"encoding/binary"
 	"encoding/json"
+	"flag"
 	"io/ioutil"
 	"path/filepath"
 	"strconv"
@@ -78,6 +81,46 @@ func TestAdd3(t *testing.T) {
 			t.Errorf(
 				"%s: Add(%d, %d) = %d, expected %d",
 				v.Label, v.A, v.B, actual, v.Expected,
+			)
+		}
+	}
+}
+
+// GOLDEN FILES - 20
+// テスト結果を update フラグがついていれば、ファイルに保存できる様にした上で、
+// 普段は、その保存しておいたファイルから期待値を読み取ってテストを実行する。
+// 利用においては以下3点の注意が書かれている。
+// * 手動でハードコーディングせずに複雑な出力をテストする
+// * 生成されたデータを目で見て、正しい場合は、データをコミットする
+// * 複雑な構造をテストするためのスケーラブルな方法(String()を実装)
+//
+// テストの期待値を手で書かずに容易に実現できるメリットがありそう。
+// byteデータの変換などでヘルパーの実装が必要そう。
+//
+var update = flag.Bool("update", false, "update golden files")
+
+func TestAdd4(t *testing.T) {
+	cases := map[string]struct{ A, B int }{
+		"foo": {1, 1},
+		"bar": {1, -1},
+	}
+
+	for k, tc := range cases {
+		actual := Add(tc.A, tc.B)
+		actual64 := int64(actual)
+		byteActual := make([]byte, binary.MaxVarintLen64)
+		binary.PutVarint(byteActual, actual64)
+
+		golden := filepath.Join("test-fixtures", k+".golden")
+		if *update {
+			ioutil.WriteFile(golden, byteActual, 0640)
+		}
+
+		byteExpected, _ := ioutil.ReadFile(golden)
+		if !bytes.Equal(byteActual, byteExpected) {
+			t.Errorf(
+				"%s: Add(%d, %d) = %v, expected %v",
+				k, tc.A, tc.B, byteActual, byteExpected,
 			)
 		}
 	}
