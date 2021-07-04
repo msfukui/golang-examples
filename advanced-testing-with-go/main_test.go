@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"flag"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strconv"
 	"testing"
@@ -89,13 +90,15 @@ func TestAdd3(t *testing.T) {
 // GOLDEN FILES - 20
 // テスト結果を update フラグがついていれば、ファイルに保存できる様にした上で、
 // 普段は、その保存しておいたファイルから期待値を読み取ってテストを実行する。
-// 利用においては以下3点の注意が書かれている。
+// `go test -update` でフラグを立てて実行できる。
+// 利用において以下3点のコメントが記載されている。
 // * 手動でハードコーディングせずに複雑な出力をテストする
 // * 生成されたデータを目で見て、正しい場合は、データをコミットする
 // * 複雑な構造をテストするためのスケーラブルな方法(String()を実装)
 //
-// テストの期待値を手で書かずに容易に実現できるメリットがありそう。
-// byteデータの変換などでヘルパーの実装が必要そう。
+// テストの期待値を手で書かず容易に管理・実現できるメリットがありそう。
+// ただしデータの保管の実装は少し煩雑になるため、byteデータの変換などでヘルパーの実装が必要そう。
+// このサンプルではbyteで保管しているが、実際には、目視で確認するためにtextで保管した方がよさそう。
 //
 var update = flag.Bool("update", false, "update golden files")
 
@@ -123,5 +126,48 @@ func TestAdd4(t *testing.T) {
 				k, tc.A, tc.B, byteActual, byteExpected,
 			)
 		}
+	}
+}
+
+// TEST HELPERS - 29
+// 後始末用の関数を返却して defer で終了時に遅延実行する実装例。
+func testTempFile(t *testing.T) (string, func()) {
+	tf, err := ioutil.TempFile("", "test")
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	return tf.Name(), func() { os.Remove(tf.Name()) }
+}
+
+func TestThing(t *testing.T) {
+	tf, tfClose := testTempFile(t)
+	defer tfClose()
+
+	if tf == "" {
+		t.Errorf("tf.Name(): %s", tf)
+	}
+}
+
+// TEST HELPERS - 30
+// クロージャーを使った実装例。
+func testChdir(t *testing.T, dir string) func() {
+	old, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	return func() { os.Chdir(old) }
+}
+
+func TestThing2(t *testing.T) {
+	defer testChdir(t, "/tmp")()
+
+	if actual := Add(1, 1); actual != 2 {
+		t.Errorf("actual: %d", actual)
 	}
 }
