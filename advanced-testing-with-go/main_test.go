@@ -1,15 +1,24 @@
 package main
 
+// Sample code - Advanced Testing with Go
+// https://speakerdeck.com/mitchellh/advanced-testing-with-go
+
 import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
 	"flag"
+	"fmt"
+	"io"
 	"io/ioutil"
+	"net"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
+	"time"
 )
 
 // TABLE DRIVEN TESTS - 13
@@ -169,5 +178,182 @@ func TestThing2(t *testing.T) {
 
 	if actual := Add(1, 1); actual != 2 {
 		t.Errorf("actual: %d", actual)
+	}
+}
+
+// NETWORKING - 37
+// Error checking omitted for brevity
+// net.Conn をモックにする必要はないよ、
+// モックではなく実際に通信を作ってテストしよう、
+// と書かれている。
+func TestConn(t *testing.T) {
+	ln, _ := net.Listen("tcp", "127.0.0.1:0")
+
+	go func() {
+		defer ln.Close()
+		ln.Accept()
+	}()
+
+	net.Dial("tcp", ln.Addr().String())
+}
+
+// SUBPROCESSING: REAL - 45
+// ない場合はモックを使わずに明示的にテストをスキップする
+// 副作用に注意
+var testHasGit bool
+
+func init() {
+	if _, err := exec.LookPath("git"); err == nil {
+		testHasGit = true
+	}
+}
+
+func TestGitGeter(t *testing.T) {
+	if !testHasGit {
+		t.Log("git not found, skipping")
+		t.Skip()
+	}
+}
+
+// SUBPROCESSING: MOCK - 47, 48, 49
+// See: src/os/exec/exec/exec_test.go: helperCommandContext()
+// 内部で自身の TestHelperProcess() のみを引数付きで呼び出す様に
+// exec.Cmd に差し込んでいる
+func helperProcess(s ...string) *exec.Cmd {
+	cs := []string{"-test.run=TestHelperProcess", "--"}
+	cs = append(cs, s...)
+	env := []string{
+		"GO_WANT_HELPER_PROCESS=1",
+	}
+
+	cmd := exec.Command(os.Args[0], cs...)
+	cmd.Env = append(env, os.Environ()...)
+	return cmd
+}
+
+// see: src/os/exec/exec/exec_test.go: TestHelperProcess()
+// TestHelperProcess() にはそれぞれのコマンドに対応したモックの実装を書く
+func TestHelperProcess(*testing.T) {
+	if os.Getenv("GO_WANT_HELPER_PROCESS") != "1" {
+		return
+	}
+	defer os.Exit(0)
+
+	args := os.Args
+	for len(args) > 0 {
+		if args[0] == "--" {
+			args = args[1:]
+			break
+		}
+		args = args[1:]
+	}
+
+	cmd, args := args[0], args[1:]
+	switch cmd {
+	case "echo":
+		iargs := []interface{}{}
+		for _, s := range args {
+			iargs = append(iargs, s)
+		}
+		fmt.Println(iargs...)
+	case "cat":
+		if len(args) == 0 {
+			io.Copy(os.Stdout, os.Stdin)
+			return
+		}
+		exit := 0
+		for _, fn := range args {
+			f, err := os.Open(fn)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+				exit = 2
+			} else {
+				defer f.Close()
+				io.Copy(os.Stdout, f)
+			}
+		}
+		os.Exit(exit)
+	default:
+		fmt.Fprintf(os.Stderr, "Unknown command %q\n", cmd)
+		os.Exit(2)
+	}
+}
+
+// Use helperProcess(): echo
+// モックを使ったテストの実例: echo の場合
+func TestEcho(t *testing.T) {
+	bs, err := helperProcess("echo", "foo bar", "baz").Output()
+	if err != nil {
+		t.Errorf("echo: %v", err)
+	}
+	if g, e := string(bs), "foo bar baz\n"; g != e {
+		t.Errorf("echo: want %q, got %q", e, g)
+	}
+}
+
+// Use helperProcess(): cat
+// モックを使ったテストの実例: cat の場合
+func TestCatStdin(t *testing.T) {
+	// Cat, testing stdin and stdout.
+	input := "Input string\nLine 2"
+	p := helperProcess("cat")
+	p.Stdin = strings.NewReader(input)
+	bs, err := p.Output()
+	if err != nil {
+		t.Errorf("cat: %v", err)
+	}
+	s := string(bs)
+	if s != input {
+		t.Errorf("cat: want %q, got %q", input, s)
+	}
+}
+
+// TIMING DEPENDENT TESTS - 64
+// 記事では fake time は使うな、と書かれていたが、
+// 別記事から持ってきてタイミングテストのサンプルを書いてみた
+// 実行時にfaketime を使う場合は `-tags faketime` または `--tags=faketime` を付与する
+// `net` などネットワーク関連のモジュールを使っているとハングするらしいので注意
+// c.f. https://qiita.com/hogedigo/items/c2b6281961c5e21c4907
+func TestTimingDependentTests(t *testing.T) {
+	n := 1
+	start := time.Now()
+	result := TimingDependentTests(n)
+	if expected := "done"; result != expected {
+		t.Fatalf("TimingDependantTests(): want %v, got %v", expected, result)
+	}
+	duration := time.Since(start)
+	delta := duration - time.Duration(n)*time.Second
+	if delta < 0 {
+		delta *= -1
+	}
+	if delta > time.Second {
+		t.Fatalf("TimingDependantTests(): Illigal duration: %v", duration)
+	}
+}
+
+// PARALLELIZATION - 66
+// 記事では並列化はするな、と書かれていたが、
+// 別記事から持ってきて並列化テストのサンプルを書いてみた
+// 記事内だとハマるケースみたいだけど、テスト対象を関数にした場合問題なく動作した
+// c.f. https://zenn.dev/ucwork/articles/cd26d933978080
+func TestParallelTests(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name     string
+		value    int
+		expected string
+	}{
+		{name: "test1", value: 1, expected: "test1, 1"},
+		{name: "test2", value: 2, expected: "test2, 2"},
+		{name: "test3", value: 3, expected: "test3, 3"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := ParallelTests(tt.name, tt.value)
+			fmt.Println(result)
+			if result != tt.expected {
+				t.Fatalf("ParallelTests(): want %v, got %v", tt.expected, result)
+			}
+		})
 	}
 }
