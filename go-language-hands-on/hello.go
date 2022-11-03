@@ -7,12 +7,18 @@ import (
 )
 
 func main() {
-	x := hello.Input("type a price")
+	t := 0
+	x := hello.Input("type a number")
 	n, err := strconv.Atoi(x)
 	if err != nil {
-		fmt.Println("ERROR!!")
-		return
+		goto err
 	}
-	p := float64(n)
-	fmt.Println(int(p * 1.1))
+	for i := 1; i <= n; i++ {
+		t += i
+	}
+	fmt.Println("total:", t)
+	return
+
+err:
+	fmt.Println("ERROR!")
 }
