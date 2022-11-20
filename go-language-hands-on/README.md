@@ -9,4 +9,5 @@
 ```
 $ go mod init golang-example/go-language-hands-on
 $ go get github.com/PuerkitoBio/goquery # <- for chapter 5.2
+$ go get github.com/mattn/go-sqlite3 # <- for chapter 5.3
 ```
