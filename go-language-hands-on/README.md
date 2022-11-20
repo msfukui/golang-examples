@@ -8,4 +8,5 @@
 
 ```
 $ go mod init golang-example/go-language-hands-on
+$ go get github.com/PuerkitoBio/goquery # <- for chapter 5.2
 ```
