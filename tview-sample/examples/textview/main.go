@@ -10,13 +10,13 @@ import (
 	"github.com/rivo/tview"
 )
 
-const corporate = `Leverage agile frameworks to provide a robust synopsis for high level overviews. Iterative approaches to corporate strategy foster collaborative thinking to further the overall value proposition. Organically grow the holistic world view of disruptive innovation via workplace diversity and empowerment.
+const corporate = `アジャイル フレームワークを活用して、高レベルの概要の堅牢な概要を提供します。 企業戦略への反復的なアプローチは、全体的な価値提案を促進するための共同思考を促進します。 職場の多様性とエンパワーメントを通じて、破壊的イノベーションの全体論的な世界観を有機的に成長させます。
 
-Bring to the table win-win survival strategies to ensure proactive domination. At the end of the day, going forward, a new normal that has evolved from generation X is on the runway heading towards a streamlined cloud solution. User generated content in real-time will have multiple touchpoints for offshoring.
+有利なサバイバル戦略をテーブルにもたらし、積極的な支配を確実にします。 結局のところ、ジェネレーション X から進化したニューノーマルは、合理化されたクラウド ソリューションに向かって滑走路上にあります。 ユーザーがリアルタイムで作成したコンテンツには、オフショアリングのための複数のタッチポイントがあります。
 
-Capitalize on low hanging fruit to identify a ballpark value added activity to beta test. Override the digital divide with additional clickthroughs from DevOps. Nanotechnology immersion along the information highway will close the loop on focusing solely on the bottom line.
+簡単に達成できる成果を利用して、ベータ テストに大まかな付加価値のあるアクティビティを特定します。 DevOps からの追加のクリックスルーでデジタル デバイドをオーバーライドします。 情報ハイウェイに沿ったナノテクノロジーへの没入は、利益のみに焦点を当てるというループを閉じます。
 
-[yellow]Press Enter, then Tab/Backtab for word selections`
+[yellow] Enter キーを押してから、Tab/BackTab を押して単語を選択します`
 
 func main() {
 	app := tview.NewApplication()
@@ -28,16 +28,16 @@ func main() {
 		})
 	numSelections := 0
 	go func() {
-		for _, word := range strings.Split(corporate, " ") {
-			if word == "the" {
-				word = "[red]the[white]"
+		for _, word := range strings.Split(corporate, "") {
+			if word == "は" {
+				word = "[red]は[white]"
 			}
-			if word == "to" {
-				word = fmt.Sprintf(`["%d"]to[""]`, numSelections)
+			if word == "を" {
+				word = fmt.Sprintf(`["%d"]を[""]`, numSelections)
 				numSelections++
 			}
-			fmt.Fprintf(textView, "%s ", word)
-			time.Sleep(200 * time.Millisecond)
+			fmt.Fprintf(textView, "%s", word)
+			time.Sleep(50 * time.Millisecond)
 		}
 	}()
 	textView.SetDoneFunc(func(key tcell.Key) {
