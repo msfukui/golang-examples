@@ -1,0 +1,27 @@
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <title>Hello</title>
+    <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+          crossorigin="anonymous">
+  </head>
+  <body class="container">
+    <h1 slass="display-4 mb-4">{{.Title}}</h1>
+    {{ if .Flg }}
+    <p>{{.Message}}</p>
+    {{ else }}
+    <p>{{.JMessage}}</p>
+    {{ end }}
+    <ul class="list-group">
+      {{ range $index, $element := .Items }}
+      <li class="list-group-item">{{$index}}: {{$element}}</li>
+      {{ end }}
+    </ul>
+    {{ with .WithMessage }}
+    <p>OK, message is here!</p>
+    {{ else }}
+    <p>no message...</p>
+    {{ end }}
+  </body>
+</html>
